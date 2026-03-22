@@ -9,6 +9,7 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ success: false, message: "All fields are required" });
   }
 
+  
   const sql = `INSERT INTO contact_messages (name, phone, email, subject, message) VALUES (?, ?, ?, ?, ?)`;
   db.query(sql, [name, phone, email, subject, message], async (err, result) => {
     if (err) return res.status(500).json({ success: false, message: "Database error" });

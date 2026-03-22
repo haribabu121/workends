@@ -3,6 +3,10 @@ const router = express.Router();
 const db = require("../db");
 const { sendAdminNotification1 } = require("../emailService");
 
+router.options("/", (req, res) => {
+  res.sendStatus(200);
+});
+
 router.post("/", async (req, res) => {
   const { name, email, subject, message } = req.body;
   if (!name || !email || !subject || !message) {
