@@ -445,6 +445,8 @@ function ensureDataDir() {
   }
 }
 
+let memoryData = null;
+
 function readSeed() {
   try {
     if (!fs.existsSync(SEED_PATH)) {
@@ -458,6 +460,10 @@ function readSeed() {
 }
 
 function load() {
+  if (memoryData) {
+    return memoryData;
+  }
+
   try {
     ensureDataDir();
     if (!fs.existsSync(CMS_PATH)) {
@@ -467,11 +473,15 @@ function load() {
       } catch (err) {
         console.warn("Warning: Could not save data (read-only environment)");
       }
+      memoryData = seed;
       return seed;
     }
-    return JSON.parse(fs.readFileSync(CMS_PATH, "utf8"));
+    const fileData = JSON.parse(fs.readFileSync(CMS_PATH, "utf8"));
+    memoryData = fileData;
+    return fileData;
   } catch (err) {
     console.warn("Warning: Using embedded default data - file system error:", err.message);
+    memoryData = DEFAULT_DATA;
     return DEFAULT_DATA;
   }
 }
@@ -480,8 +490,10 @@ function save(data) {
   try {
     ensureDataDir();
     fs.writeFileSync(CMS_PATH, JSON.stringify(data, null, 2), "utf8");
+    memoryData = data;
   } catch (err) {
     console.warn("Warning: Could not save data to file system (read-only environment)");
+    memoryData = data;
   }
 }
 
