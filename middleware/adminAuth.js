@@ -1,9 +1,9 @@
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.ADMIN_JWT_SECRET || "akevents-cms-dev-secret-change-in-production";
+const JWT_SECRET = process.env.ADMIN_JWT_SECRET || "akevents-cms-dev-secret";
 
 function getAdminCredentials() {
-  const email = process.env.ADMIN_EMAIL || "akeventsandfirework@gmail.com";
+  const email = process.env.ADMIN_EMAIL || "akeventsandfireworks@gmail.com";
   const password = process.env.ADMIN_PASSWORD || "AkEvents@98";
   return {
     email: email.trim().toLowerCase(),
