@@ -18,13 +18,13 @@ router.get("/me", verifyToken, (req, res) => {
   res.json({ ok: true, admin: true });
 });
 
-router.get("/products", verifyToken, (req, res) => {
-  const data = cmsStore.load();
+router.get("/products", verifyToken, async (req, res) => {
+  const data = await cmsStore.load();
   res.json({ ok: true, products: data.products || [] });
 });
 
-router.post("/products", verifyToken, (req, res) => {
-  const data = cmsStore.load();
+router.post("/products", verifyToken, async (req, res) => {
+  const data = await cmsStore.load();
   const body = req.body || {};
   const id = cmsStore.nextId(data.products || []);
   const product = {
@@ -42,8 +42,8 @@ router.post("/products", verifyToken, (req, res) => {
   res.json({ ok: true, product });
 });
 
-router.put("/products/:id", verifyToken, (req, res) => {
-  const data = cmsStore.load();
+router.put("/products/:id", verifyToken, async (req, res) => {
+  const data = await cmsStore.load();
   const id = Number(req.params.id);
   const idx = (data.products || []).findIndex((p) => p.id === id);
   if (idx === -1) return res.status(404).json({ ok: false, message: "Not found" });
@@ -64,8 +64,8 @@ router.put("/products/:id", verifyToken, (req, res) => {
   res.json({ ok: true, product: updated });
 });
 
-router.patch("/products/:id/active", verifyToken, (req, res) => {
-  const data = cmsStore.load();
+router.patch("/products/:id/active", verifyToken, async (req, res) => {
+  const data = await cmsStore.load();
   const id = Number(req.params.id);
   const idx = (data.products || []).findIndex((p) => p.id === id);
   if (idx === -1) return res.status(404).json({ ok: false, message: "Not found" });
@@ -75,12 +75,12 @@ router.patch("/products/:id/active", verifyToken, (req, res) => {
   res.json({ ok: true, product: data.products[idx] });
 });
 
-router.get("/gallery", verifyToken, (req, res) => {
-  const data = cmsStore.load();
+router.get("/gallery", verifyToken, async (req, res) => {
+  const data = await cmsStore.load();
   res.json({ ok: true, gallery: data.gallery || [] });
 });
 
-router.put("/gallery", verifyToken, (req, res) => {
+router.put("/gallery", verifyToken, async (req, res) => {
   const data = cmsStore.load();
   const items = req.body.gallery;
   if (!Array.isArray(items)) {
@@ -113,13 +113,13 @@ router.post("/gallery", verifyToken, (req, res) => {
   res.json({ ok: true, item });
 });
 
-router.get("/banner", verifyToken, (req, res) => {
-  const data = cmsStore.load();
+router.get("/banner", verifyToken, async (req, res) => {
+  const data = await cmsStore.load();
   res.json({ ok: true, banner: data.banner || { text: "" } });
 });
 
-router.put("/banner", verifyToken, (req, res) => {
-  const data = cmsStore.load();
+router.put("/banner", verifyToken, async (req, res) => {
+  const data = await cmsStore.load();
   const text = String((req.body && req.body.text) || "");
   data.banner = { text };
   cmsStore.save(data);
