@@ -19,7 +19,7 @@ router.get("/me", verifyToken, (req, res) => {
 });
 
 router.get("/products", verifyToken, async (req, res) => {
-  const data = await cmsStore.load();
+  const data = await cmsStore.load(req.query.refresh === 'true');
   res.json({ ok: true, products: data.products || [] });
 });
 

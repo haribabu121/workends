@@ -460,8 +460,8 @@ function readSeed() {
   }
 }
 
-async function load() {
-  if (memoryData) {
+function load(forceRefresh = false) {
+  if (memoryData && !forceRefresh) {
     return memoryData;
   }
 
@@ -489,9 +489,27 @@ async function load() {
           resolve(DEFAULT_DATA);
         }
       } else if (results.length > 0) {
-        const data = JSON.parse(results[0].data);
-        memoryData = data;
-        resolve(data);
+        try {
+          let data;
+          // Handle both string and object data from DB
+          if (typeof results[0].data === 'string') {
+            data = JSON.parse(results[0].data);
+          } else {
+            data = results[0].data;
+          }
+          // Validate data structure
+          if (!data || typeof data !== 'object') {
+            throw new Error('Invalid data structure');
+          }
+          memoryData = data;
+          resolve(data);
+        } catch (parseErr) {
+          console.warn("Data parse error:", parseErr.message, "- Using seed data");
+          const seed = readSeed();
+          save(seed);
+          memoryData = seed;
+          resolve(seed);
+        }
       } else {
         // No data in DB, use seed
         const seed = readSeed();
@@ -504,7 +522,7 @@ async function load() {
 }
 
 function save(data) {
-  memoryData = data;
+  memoryData = data; // Update cache
   // Try to save to database
   try {
     const jsonData = JSON.stringify(data);
