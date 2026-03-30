@@ -9,8 +9,20 @@ const db = mysql.createConnection({
 });
 
 db.connect(err => {
-  if (err) throw err;
-  console.log("✅ MySQL connected");
+  if (err) {
+    console.error("❌ MySQL connection error:", err);
+    // Don't throw, just log - serverless functions may retry
+  } else {
+    console.log("✅ MySQL connected");
+  }
+});
+
+// Reconnect on connection loss
+db.on('error', (err) => {
+  console.error("❌ Database error:", err);
+  if(err.code === 'PROTOCOL_CONNECTION_LOST') db.connect();
+  if(err.code === 'ER_CON_COUNT_ERROR') db.connect();
+  if(err.code === 'ER_CONNECTION_KILLED') db.connect();
 });
 
 module.exports = db;
