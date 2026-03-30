@@ -55,7 +55,8 @@ app.use((req, res, next) => {
 });
 
 /* ✅ BODY PARSER */
-app.use(express.json());
+// Set limit to 5 MB to allow for 3 MB images + metadata
+app.use(express.json({ limit: '5mb' }));
 
 /* ✅ ROUTES */
 app.use("/api/contact", contactRoutes);
