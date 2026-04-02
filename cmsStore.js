@@ -2,9 +2,11 @@ const fs = require("fs");
 const path = require("path");
 const db = require("./db");
 
-const DATA_DIR = path.join(__dirname, "data");
+const DEFAULT_DATA_DIR = path.join(__dirname, "data");
+const TEMP_DATA_DIR = path.join("/tmp", "fireworks-cms");
+const DATA_DIR = process.env.CMS_DATA_DIR || (process.env.VERCEL ? TEMP_DATA_DIR : DEFAULT_DATA_DIR);
 const CMS_PATH = path.join(DATA_DIR, "cms.json");
-const SEED_PATH = path.join(DATA_DIR, "cms.seed.json");
+const SEED_PATH = path.join(DEFAULT_DATA_DIR, "cms.seed.json");
 
 // Default embedded data for Vercel (serverless environments without persistent file storage)
 const DEFAULT_DATA = {
