@@ -10,13 +10,20 @@ router.get("/test", (req, res) => {
 });
 
 router.post("/login", (req, res) => {
+  console.log("Admin login attempt");
   const email = String(req.body?.email || "").trim().toLowerCase();
   const password = String(req.body?.password || "").trim();
   const { email: adminEmail, password: adminPass } = getAdminCredentials();
+  
+  console.log("Login attempt - Email:", email, "Expected:", adminEmail);
+  console.log("JWT_SECRET exists:", !!process.env.ADMIN_JWT_SECRET);
+  
   if (email !== adminEmail || password !== adminPass) {
+    console.log("Login failed: invalid credentials");
     return res.status(401).json({ ok: false, message: "Invalid email or password" });
   }
   const token = signToken();
+  console.log("Login successful, token generated");
   res.json({ ok: true, token });
 });
 
