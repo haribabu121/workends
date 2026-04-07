@@ -500,20 +500,10 @@ function load(forceRefresh = false) {
             }
           } catch (fileErr) {
             console.warn("File load failed:", fileErr.message, "- Using seed data");
-            memoryData = data;
-            resolve(data);
-          } catch (parseErr) {
-            console.warn("Data parse error:", parseErr.message, "- Using seed data");
-            try {
-              const seed = readSeed();
-              save(seed);
-              memoryData = seed;
-              resolve(seed);
-            } catch (saveErr) {
-              console.warn("Seed save failed:", saveErr.message);
-              memoryData = readSeed();
-              resolve(memoryData);
-            }
+            const seed = readSeed();
+            save(seed);
+            memoryData = seed;
+            resolve(seed);
           }
         } else if (results.length > 0) {
           const data = JSON.parse(results[0].data);
