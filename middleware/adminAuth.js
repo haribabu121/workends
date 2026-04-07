@@ -2,17 +2,17 @@ const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET || "akevents-cms-dev-secret";
 
-console.log("AdminAuth middleware loaded with JWT_SECRET:", !!JWT_SECRET);
+console.log("AdminAuth middleware initialized", {
+  hasJWTSecret: !!process.env.ADMIN_JWT_SECRET,
+  hasAdminEmail: !!process.env.ADMIN_EMAIL,
+  hasAdminPassword: !!process.env.ADMIN_PASSWORD,
+  nodeEnv: process.env.NODE_ENV
+});
 
 function getAdminCredentials() {
   const email = process.env.ADMIN_EMAIL || "akeventsandfireworks@gmail.com";
   const password = process.env.ADMIN_PASSWORD || "AkEvents@98";
-  console.log("Admin credentials loaded:", {
-    email: email.trim().toLowerCase(),
-    hasPassword: !!password,
-    envEmail: !!process.env.ADMIN_EMAIL,
-    envPassword: !!process.env.ADMIN_PASSWORD
-  });
+  
   return {
     email: email.trim().toLowerCase(),
     password: String(password).trim(),
@@ -20,35 +20,79 @@ function getAdminCredentials() {
 }
 
 function signToken() {
-  console.log("Signing token with JWT_SECRET:", !!JWT_SECRET);
-  return jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "7d" });
-}
-
-function verifyToken(req, res, next) {
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
-  console.log("Auth middleware: checking token, JWT_SECRET exists:", !!process.env.ADMIN_JWT_SECRET);
-  console.log("Auth middleware: token provided:", !!token);
-  
-  if (!token) {
-    console.log("Auth middleware: no token provided");
-    return res.status(401).json({ ok: false, message: "Missing token" });
-  }
-  
   if (!JWT_SECRET) {
-    console.error("Auth middleware: JWT_SECRET is missing!");
-    return res.status(500).json({ ok: false, message: "Server configuration error" });
+    throw new Error("JWT_SECRET is not configured");
   }
   
   try {
-    req.admin = jwt.verify(token, JWT_SECRET);
-    console.log("Auth middleware: token verified successfully");
-    next();
+    const token = jwt.sign(
+      { 
+        role: "admin",
+        timestamp: Date.now()
+      }, 
+      JWT_SECRET, 
+      { expiresIn: "7d" }
+    );
+    
+    console.log("Token signed successfully");
+    return token;
   } catch (error) {
-    console.error("Auth middleware: token verification failed:", error.message);
-    console.error("JWT_SECRET being used:", JWT_SECRET ? "exists" : "missing");
-    return res.status(401).json({ ok: false, message: "Invalid or expired token" });
+    console.error("Error signing token:", error);
+    throw new Error("Failed to generate authentication token");
   }
 }
 
-module.exports = { getAdminCredentials, signToken, verifyToken, JWT_SECRET };
+function verifyToken(req, res, next) {
+  try {
+    const header = req.headers.authorization || "";
+    const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+    
+    console.log("Token verification attempt", {
+      hasToken: !!token,
+      hasJWTSecret: !!JWT_SECRET,
+      headerLength: header.length
+    });
+    
+    if (!token) {
+      return res.status(401).json({ 
+        ok: false, 
+        message: "Authentication token is required" 
+      });
+    }
+    
+    if (!JWT_SECRET) {
+      console.error("JWT_SECRET is not configured in production");
+      return res.status(500).json({ 
+        ok: false, 
+        message: "Server configuration error" 
+      });
+    }
+    
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      req.admin = decoded;
+      console.log("Token verified successfully");
+      next();
+    } catch (jwtError) {
+      console.error("JWT verification failed:", jwtError.message);
+      return res.status(401).json({ 
+        ok: false, 
+        message: "Invalid or expired authentication token" 
+      });
+    }
+    
+  } catch (error) {
+    console.error("Authentication middleware error:", error);
+    return res.status(500).json({ 
+      ok: false, 
+      message: "Authentication server error" 
+    });
+  }
+}
+
+module.exports = { 
+  getAdminCredentials, 
+  signToken, 
+  verifyToken, 
+  JWT_SECRET 
+};
