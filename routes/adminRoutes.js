@@ -6,25 +6,45 @@ const { getAdminCredentials, signToken, verifyToken } = require("../middleware/a
 // Test route to verify admin routes are loaded
 router.get("/test", (req, res) => {
   console.log("Admin test route accessed");
-  res.json({ ok: true, message: "Admin routes are working" });
+  res.json({ ok: true, message: "Admin routes are working", env: process.env.NODE_ENV });
 });
 
-router.post("/login", (req, res) => {
-  console.log("Admin login attempt");
-  const email = String(req.body?.email || "").trim().toLowerCase();
-  const password = String(req.body?.password || "").trim();
-  const { email: adminEmail, password: adminPass } = getAdminCredentials();
-  
-  console.log("Login attempt - Email:", email, "Expected:", adminEmail);
-  console.log("JWT_SECRET exists:", !!process.env.ADMIN_JWT_SECRET);
-  
-  if (email !== adminEmail || password !== adminPass) {
-    console.log("Login failed: invalid credentials");
-    return res.status(401).json({ ok: false, message: "Invalid email or password" });
+// Login route with comprehensive debugging
+router.post("/login", async (req, res) => {
+  try {
+    console.log("Admin login attempt");
+    console.log("Request body:", req.body);
+    console.log("Environment vars:", {
+      JWT_SECRET: !!process.env.ADMIN_JWT_SECRET,
+      ADMIN_EMAIL: !!process.env.ADMIN_EMAIL,
+      ADMIN_PASSWORD: !!process.env.ADMIN_PASSWORD,
+      NODE_ENV: process.env.NODE_ENV
+    });
+    
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const password = String(req.body?.password || "").trim();
+    const { email: adminEmail, password: adminPass } = getAdminCredentials();
+    
+    console.log("Login attempt - Email:", email, "Expected:", adminEmail);
+    console.log("JWT_SECRET exists:", !!process.env.ADMIN_JWT_SECRET);
+    
+    if (!process.env.ADMIN_JWT_SECRET) {
+      console.error("JWT_SECRET is missing!");
+      return res.status(500).json({ ok: false, message: "Server configuration error" });
+    }
+    
+    if (email !== adminEmail || password !== adminPass) {
+      console.log("Login failed: invalid credentials");
+      return res.status(401).json({ ok: false, message: "Invalid email or password" });
+    }
+    
+    const token = signToken();
+    console.log("Login successful, token generated");
+    res.json({ ok: true, token });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ ok: false, message: "Server error: " + error.message });
   }
-  const token = signToken();
-  console.log("Login successful, token generated");
-  res.json({ ok: true, token });
 });
 
 router.get("/me", verifyToken, (req, res) => {
