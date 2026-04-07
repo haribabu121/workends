@@ -59,11 +59,23 @@ app.use((req, res, next) => {
 // Set limit to 5 MB to allow for 3 MB images + metadata
 app.use(express.json({ limit: '5mb' }));
 
-/* ✅ ROUTES */
-app.use("/api/contact", contactRoutes);
-app.use("/api/connect", connectRoutes);
-app.use("/api/cms", cmsPublicRoutes);
-app.use("/api/admin", adminRoutes);
+/* ROUTES */
+console.log("Loading routes...");
+try {
+  app.use("/api/contact", contactRoutes);
+  console.log("Contact routes loaded");
+  
+  app.use("/api/connect", connectRoutes);
+  console.log("Connect routes loaded");
+  
+  app.use("/api/cms", cmsPublicRoutes);
+  console.log("CMS public routes loaded");
+  
+  app.use("/api/admin", adminRoutes);
+  console.log("Admin routes loaded");
+} catch (error) {
+  console.error("Error loading routes:", error);
+}
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>

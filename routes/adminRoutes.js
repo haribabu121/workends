@@ -3,6 +3,12 @@ const router = express.Router();
 const cmsStore = require("../cmsStore");
 const { getAdminCredentials, signToken, verifyToken } = require("../middleware/adminAuth");
 
+// Test route to verify admin routes are loaded
+router.get("/test", (req, res) => {
+  console.log("Admin test route accessed");
+  res.json({ ok: true, message: "Admin routes are working" });
+});
+
 router.post("/login", (req, res) => {
   const email = String(req.body?.email || "").trim().toLowerCase();
   const password = String(req.body?.password || "").trim();
