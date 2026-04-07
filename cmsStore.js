@@ -1,6 +1,15 @@
 const fs = require("fs");
 const path = require("path");
-const db = require("./db");
+
+// Only load database in development, not on Vercel
+let db = null;
+if (!process.env.VERCEL) {
+  try {
+    db = require("./db");
+  } catch (error) {
+    console.warn("Database not available, using file storage:", error.message);
+  }
+}
 
 const DEFAULT_DATA_DIR = path.join(__dirname, "data");
 const TEMP_DATA_DIR = path.join("/tmp", "fireworks-cms");
@@ -467,72 +476,110 @@ function load(forceRefresh = false) {
     return memoryData;
   }
 
-  // Try to load from database first
+  // Try to load from database first (only if available)
   return new Promise((resolve) => {
-    db.query('SELECT * FROM cms_data WHERE id = 1', (err, results) => {
-      if (err) {
-        console.warn("DB load failed:", err.message);
-        // Fallback to file
-        try {
-          ensureDataDir();
-          if (!fs.existsSync(CMS_PATH)) {
-            const seed = readSeed();
-            save(seed);
-            memoryData = seed;
-            resolve(seed);
-          } else {
-            const fileData = JSON.parse(fs.readFileSync(CMS_PATH, "utf8"));
-            memoryData = fileData;
-            resolve(fileData);
+    if (db) {
+      db.query('SELECT * FROM cms_data WHERE id = 1', (err, results) => {
+        if (err) {
+          console.warn("DB load failed:", err.message);
+          // Fallback to file
+          try {
+            ensureDataDir();
+            if (!fs.existsSync(CMS_PATH)) {
+              const seed = readSeed();
+              save(seed);
+              memoryData = seed;
+              resolve(seed);
+            } else {
+              const fileData = JSON.parse(fs.readFileSync(CMS_PATH, "utf8"));
+              memoryData = fileData;
+              resolve(fileData);
+            }
+          } catch (fileErr) {
+            console.warn("File load failed:", fileErr.message, "- Using seed data");
+            memoryData = data;
+            resolve(data);
+          } catch (parseErr) {
+            console.warn("Data parse error:", parseErr.message, "- Using seed data");
+            try {
+              const seed = readSeed();
+              save(seed);
+              memoryData = seed;
+              resolve(seed);
+            } catch (saveErr) {
+              console.warn("Seed save failed:", saveErr.message);
+              memoryData = readSeed();
+              resolve(memoryData);
+            }
           }
-        } catch (fileErr) {
-          console.warn("File load failed:", fileErr.message, "- Using seed data");
+        } else if (results.length > 0) {
+          const data = JSON.parse(results[0].data);
           memoryData = data;
           resolve(data);
-        } catch (parseErr) {
-          console.warn("Data parse error:", parseErr.message, "- Using seed data");
-          try {
-            const seed = readSeed();
-            save(seed);
-            memoryData = seed;
-            resolve(seed);
-          } catch (saveErr) {
-            console.warn("Seed save failed:", saveErr.message);
-            memoryData = readSeed();
-            resolve(memoryData);
-          }
+        } else {
+          // No data in DB, use seed
+          const seed = readSeed();
+          save(seed);
+          memoryData = seed;
+          resolve(seed);
         }
-      } else {
-        // No data in DB, use seed
+      });
+    } else {
+      // No database available, use file storage
+      try {
+        ensureDataDir();
+        if (!fs.existsSync(CMS_PATH)) {
+          const seed = readSeed();
+          save(seed);
+          memoryData = seed;
+          resolve(seed);
+        } else {
+          const fileData = JSON.parse(fs.readFileSync(CMS_PATH, "utf8"));
+          memoryData = fileData;
+          resolve(fileData);
+        }
+      } catch (parseErr) {
+        console.warn("Data parse error:", parseErr.message, "- Using seed data");
         const seed = readSeed();
         save(seed);
         memoryData = seed;
         resolve(seed);
       }
-    });
+    }
   });
 }
 
 function save(data) {
   memoryData = data; // Update cache
-  // Try to save to database
-  try {
-    const jsonData = JSON.stringify(data);
-    db.query('INSERT INTO cms_data (id, data) VALUES (1, ?) ON DUPLICATE KEY UPDATE data = ?', [jsonData, jsonData], (err) => {
-      if (err) {
-        console.warn("DB save error:", err.message);
-        // Fallback to file
-        try {
-          ensureDataDir();
-          fs.writeFileSync(CMS_PATH, JSON.stringify(data, null, 2), "utf8");
-        } catch (fileErr) {
-          console.warn("File save failed:", fileErr.message);
+  
+  // Try to save to database (only if available)
+  if (db) {
+    try {
+      const jsonData = JSON.stringify(data);
+      db.query('INSERT INTO cms_data (id, data) VALUES (1, ?) ON DUPLICATE KEY UPDATE data = ?', [jsonData, jsonData], (err) => {
+        if (err) {
+          console.warn("DB save error:", err.message);
+          // Fallback to file
+          try {
+            ensureDataDir();
+            fs.writeFileSync(CMS_PATH, JSON.stringify(data, null, 2), "utf8");
+          } catch (fileErr) {
+            console.warn("File save failed:", fileErr.message);
+          }
         }
+      });
+    } catch (dbErr) {
+      console.warn("DB save error:", dbErr.message);
+      // Fallback to file
+      try {
+        ensureDataDir();
+        fs.writeFileSync(CMS_PATH, JSON.stringify(data, null, 2), "utf8");
+      } catch (fileErr) {
+        console.warn("File save failed:", fileErr.message);
       }
-    });
-  } catch (dbErr) {
-    console.warn("DB save error:", dbErr.message);
-    // Fallback to file
+    }
+  } else {
+    // No database available, use file storage
     try {
       ensureDataDir();
       fs.writeFileSync(CMS_PATH, JSON.stringify(data, null, 2), "utf8");
