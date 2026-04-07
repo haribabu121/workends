@@ -15,6 +15,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://www.akeventsandfireworks.online',
   'https://akeventsandfireworks.online',
+  'https://frontwork-drab.vercel.app', // Add your frontend domain
   '*' // Allow all for Vercel compatibility
 ];
 
