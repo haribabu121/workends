@@ -10,7 +10,18 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
-    
+    // If database is not available, just send email and return success
+    if (!db) {
+      console.log("Database not available, sending email only");
+      try { 
+        await sendAdminNotification({ name, phone, email, subject, message }); 
+      } catch (emailErr) { 
+        console.error("Email error:", emailErr);
+        return res.status(500).json({ success: false, message: "Email service unavailable" });
+      }
+      return res.json({ success: true, message: "Message sent to admin (database unavailable)" });
+    }
+
     const sql = `INSERT INTO contact_messages (name, phone, email, subject, message) VALUES (?, ?, ?, ?, ?)`;
     db.query(sql, [name, phone, email, subject, message], async (err, result) => {
       if (err) {
