@@ -3,12 +3,15 @@ const path = require("path");
 
 // Only load database in development, not on Vercel
 let db = null;
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
   try {
     db = require("./db");
+    console.log("Database loaded successfully");
   } catch (error) {
     console.warn("Database not available, using file storage:", error.message);
   }
+} else {
+  console.log("Running in production/Vercel mode - using file storage");
 }
 
 const DEFAULT_DATA_DIR = path.join(__dirname, "data");
