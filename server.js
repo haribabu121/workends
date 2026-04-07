@@ -2,6 +2,14 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
+// Debug environment variables
+console.log("=== Environment Variables Debug ===");
+console.log("ADMIN_JWT_SECRET:", !!process.env.ADMIN_JWT_SECRET);
+console.log("ADMIN_EMAIL:", !!process.env.ADMIN_EMAIL);
+console.log("ADMIN_PASSWORD:", !!process.env.ADMIN_PASSWORD);
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("=================================");
+
 const contactRoutes = require("./routes/contactRoutes");
 const connectRoutes = require("./routes/ConnectRoute");
 const cmsPublicRoutes = require("./routes/cmsPublicRoutes");
