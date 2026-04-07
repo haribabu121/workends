@@ -486,31 +486,21 @@ function load(forceRefresh = false) {
             resolve(fileData);
           }
         } catch (fileErr) {
-          console.warn("File load failed:", fileErr.message);
-          memoryData = DEFAULT_DATA;
-          resolve(DEFAULT_DATA);
-        }
-      } else if (results.length > 0) {
-        try {
-          let data;
-          // Handle both string and object data from DB
-          if (typeof results[0].data === 'string') {
-            data = JSON.parse(results[0].data);
-          } else {
-            data = results[0].data;
-          }
-          // Validate data structure
-          if (!data || typeof data !== 'object') {
-            throw new Error('Invalid data structure');
-          }
+          console.warn("File load failed:", fileErr.message, "- Using seed data");
           memoryData = data;
           resolve(data);
         } catch (parseErr) {
           console.warn("Data parse error:", parseErr.message, "- Using seed data");
-          const seed = readSeed();
-          save(seed);
-          memoryData = seed;
-          resolve(seed);
+          try {
+            const seed = readSeed();
+            save(seed);
+            memoryData = seed;
+            resolve(seed);
+          } catch (saveErr) {
+            console.warn("Seed save failed:", saveErr.message);
+            memoryData = readSeed();
+            resolve(memoryData);
+          }
         }
       } else {
         // No data in DB, use seed
@@ -530,7 +520,7 @@ function save(data) {
     const jsonData = JSON.stringify(data);
     db.query('INSERT INTO cms_data (id, data) VALUES (1, ?) ON DUPLICATE KEY UPDATE data = ?', [jsonData, jsonData], (err) => {
       if (err) {
-        console.warn("DB save failed:", err.message);
+        console.warn("DB save error:", err.message);
         // Fallback to file
         try {
           ensureDataDir();
@@ -552,9 +542,13 @@ function save(data) {
   }
 }
 
+function clearCache() {
+  memoryData = null; // Clear memory cache
+}
+
 function nextId(items) {
   if (!items.length) return 1;
   return Math.max(...items.map((x) => Number(x.id) || 0)) + 1;
 }
 
-module.exports = { load, save, nextId, CMS_PATH };
+module.exports = { load, save, nextId, CMS_PATH, clearCache };

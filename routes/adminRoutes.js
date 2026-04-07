@@ -39,6 +39,7 @@ router.post("/products", verifyToken, async (req, res) => {
   };
   data.products = [...(data.products || []), product];
   cmsStore.save(data);
+  cmsStore.clearCache(); // Clear memory cache to force refresh
   res.json({ ok: true, product });
 });
 
@@ -61,6 +62,7 @@ router.put("/products/:id", verifyToken, async (req, res) => {
   };
   data.products[idx] = updated;
   cmsStore.save(data);
+  cmsStore.clearCache(); // Clear memory cache to force refresh
   res.json({ ok: true, product: updated });
 });
 
@@ -72,6 +74,7 @@ router.patch("/products/:id/active", verifyToken, async (req, res) => {
   const active = Boolean(req.body.active);
   data.products[idx] = { ...data.products[idx], active };
   cmsStore.save(data);
+  cmsStore.clearCache(); // Clear memory cache to force refresh
   res.json({ ok: true, product: data.products[idx] });
 });
 
@@ -94,6 +97,7 @@ router.put("/gallery", verifyToken, async (req, res) => {
     event: String(g.event || ""),
   }));
   cmsStore.save(data);
+  cmsStore.clearCache(); // Clear memory cache to force refresh
   res.json({ ok: true, gallery: data.gallery });
 });
 
@@ -110,6 +114,7 @@ router.post("/gallery", verifyToken, (req, res) => {
   };
   data.gallery = [...(data.gallery || []), item];
   cmsStore.save(data);
+  cmsStore.clearCache(); // Clear memory cache to force refresh
   res.json({ ok: true, item });
 });
 
@@ -123,6 +128,7 @@ router.put("/banner", verifyToken, async (req, res) => {
   const text = String((req.body && req.body.text) || "");
   data.banner = { text };
   cmsStore.save(data);
+  cmsStore.clearCache(); // Clear memory cache to force refresh
   res.json({ ok: true, banner: data.banner });
 });
 
