@@ -19,8 +19,15 @@ router.get("/me", verifyToken, (req, res) => {
 });
 
 router.get("/products", verifyToken, async (req, res) => {
-  const data = await cmsStore.load(req.query.refresh === 'true');
-  res.json({ ok: true, products: data.products || [] });
+  try {
+    console.log("Admin products route accessed");
+    const data = await cmsStore.load(req.query.refresh === 'true');
+    console.log("CMS data loaded successfully");
+    res.json({ ok: true, products: data.products || [] });
+  } catch (error) {
+    console.error("Error in admin products route:", error);
+    res.status(500).json({ ok: false, message: "Server error: " + error.message });
+  }
 });
 
 router.post("/products", verifyToken, async (req, res) => {
