@@ -11,5 +11,13 @@
       "src": "/(.*)",
       "dest": "server.js"
     }
-  ]
+  ],
+  "env": {
+    "ADMIN_EMAIL": "akeventsandfireworks@gmail.com",
+    "ADMIN_PASSWORD": "AkEvents@98",
+    "ADMIN_JWT_SECRET": "akevents-cms-dev-secret-2024",
+    "EMAIL_USER": "akeventsandfireworks@gmail.com",
+    "EMAIL_PASS": "exrmmtpjqgzfvolh",
+    "NODE_ENV": "production"
+  }
 }
